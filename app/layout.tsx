@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+import { RouteProvider } from "@/context/RouteContext";
 import Navbar from "@/components/Navbar";
 
 export const metadata = {
@@ -14,8 +15,10 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="">
-        <Navbar />
-        {children}
+        <RouteProvider>
+          <Navbar />
+          {children}
+        </RouteProvider>
       </body>
     </html>
   );

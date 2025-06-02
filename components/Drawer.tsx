@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
+import { useRoute } from "@/context/RouteContext";
 
 interface DrawerProps {
   isOpen: boolean;
@@ -10,8 +11,15 @@ interface DrawerProps {
 const Drawer = ({ isOpen, onClose }: DrawerProps) => {
   const [isMetrosOpen, setIsMetrosOpen] = useState(false);
   const [isCorredoresOpen, setIsCorredoresOpen] = useState(false);
+  const { setCurrentRoute } = useRoute();
 
   if (!isOpen) return null;
+
+  const handleRouteClick = (route: string) => {
+    console.log(`Ruta seleccionada: ${route}`);
+    setCurrentRoute(route);
+    onClose(); // Cerrar drawer después de seleccionar
+  };
 
   return (
     <aside className="fixed top-0 right-0 h-full w-full sm:w-90 bg-white text-black px-4 py-6 shadow-lg flex flex-col z-50 transition-transform duration-300 ease-in-out">
@@ -36,15 +44,15 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
         </button>
         {isMetrosOpen && (
           <>
-            <button
+            <button 
               className="bg-[#006FFF] w-full mx-auto p-4 hover:cursor-pointer"
-              onClick={() => console.log("Línea 1")}
+              onClick={() => handleRouteClick("linea1")}
             >
               Línea 1
             </button>
             <button
               className="bg-[#006FFF] w-full mx-auto p-4 hover:cursor-pointer"
-              onClick={() => console.log("Línea 2")}
+              onClick={() => handleRouteClick("linea2")}
             >
               Línea 2
             </button>
@@ -67,19 +75,19 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
           <>
             <button
               className="bg-[#FF0000] w-full mx-auto p-4 hover:cursor-pointer"
-              onClick={() => console.log("Corredor Rojo")}
+              onClick={() => handleRouteClick("rojo")}
             >
               Corredor Rojo
             </button>
             <button
               className="bg-[#8000E2] w-full mx-auto p-4 hover:cursor-pointer"
-              onClick={() => console.log("Corredor Morado")}
+              onClick={() => handleRouteClick("morado")}
             >
               Corredor Morado
             </button>
             <button
               className="bg-[#2600FF] w-full mx-auto p-4 hover:cursor-pointer"
-              onClick={() => console.log("Corredor Azul")}
+              onClick={() => handleRouteClick("azul")}
             >
               Corredor Azul
             </button>

@@ -1,10 +1,13 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
+import { useRoute } from "@/context/RouteContext";
 import { Menu } from "lucide-react";
 import Drawer from "./Drawer";
 
 const Navbar = () => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // Usa solo el estado del contexto, elimina el useState local
+  const { isDrawerOpen, setIsDrawerOpen } = useRoute();
+  
   return (
     <nav className="sticky bg-[#054D94] w-full top-0 left-0 z-50 relative">
       <div className="flex justify-center py-4">
