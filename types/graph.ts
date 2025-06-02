@@ -1,0 +1,1 @@
+// interface del grafo nodo
