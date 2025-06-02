@@ -2,16 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
-
-interface Marker {
-  lat: number;
-  lng: number;
-  title: string;
-}
-
-interface MapProps {
-  markers: Marker[];
-}
+import { MapProps } from "@/types/mapProps";
 
 const Map = ({ markers }: MapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -25,10 +16,11 @@ const Map = ({ markers }: MapProps) => {
       });
 
       const { Map } = await loader.importLibrary("maps");
-
+      // Hacerlo con geonavicator ubicacion actual
       const location = { lat: -12.0464, lng: -77.0428 };
+      
       const options: google.maps.MapOptions = {
-        center: location, // Centro de Lima
+        center: location, 
         zoom: 14,
         mapId: "map",
       };
