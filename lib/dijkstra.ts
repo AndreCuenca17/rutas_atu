@@ -1,135 +1,162 @@
-// Algoritmo de Dijkstra (versión con logs)
-// --------------------------------------------------
-// Tus interfaces:
-// 
-// export interface Node {
-//   lat: number;
-//   lng: number;
-// }
-//
-// export type NodeId = string; // ej: "lat,lng"
-//
-// export interface Edge {
-//   from: NodeId;
-//   to: NodeId;
-//   weight: number;
-// }
-//
-// export interface Graph {
-//   nodes: Map<NodeId, Node>;       // id -> coordenadas
-//   adjList: Map<NodeId, Edge[]>;   // id -> conexiones salientes
-// }
+// Archivo: dijkstra.ts
 
 import { Graph, NodeId, Edge } from "@/types/graph";
+
+/**
+ * PriorityQueue mínima que almacena pares { key: NodeId, priority: number }.
+ * Implementado como heap binario en un array. No implementa decreaseKey nativo;
+ * cuando la prioridad de un nodo mejora, se vuelve a insertar una nueva entrada.
+ * Al extraer, se descartan las entradas obsoletas comparando con el Map de distancias.
+ */
+class PriorityQueue {
+  private heap: Array<{ key: NodeId; priority: number }> = [];
+
+  isEmpty(): boolean {
+    return this.heap.length === 0;
+  }
+
+  enqueue(key: NodeId, priority: number): void {
+    this.heap.push({ key, priority });
+    this.heapifyUp(this.heap.length - 1);
+  }
+
+  dequeue(): { key: NodeId; priority: number } | undefined {
+    if (this.isEmpty()) return undefined;
+    this.swap(0, this.heap.length - 1);
+    const min = this.heap.pop();
+    this.heapifyDown(0);
+    return min;
+  }
+
+  private heapifyUp(idx: number): void {
+    if (idx <= 0) return;
+    const parentIdx = Math.floor((idx - 1) / 2);
+    if (this.heap[parentIdx].priority > this.heap[idx].priority) {
+      this.swap(parentIdx, idx);
+      this.heapifyUp(parentIdx);
+    }
+  }
+
+  private heapifyDown(idx: number): void {
+    const leftIdx = 2 * idx + 1;
+    const rightIdx = 2 * idx + 2;
+    let smallest = idx;
+
+    if (
+      leftIdx < this.heap.length &&
+      this.heap[leftIdx].priority < this.heap[smallest].priority
+    ) {
+      smallest = leftIdx;
+    }
+
+    if (
+      rightIdx < this.heap.length &&
+      this.heap[rightIdx].priority < this.heap[smallest].priority
+    ) {
+      smallest = rightIdx;
+    }
+
+    if (smallest !== idx) {
+      this.swap(idx, smallest);
+      this.heapifyDown(smallest);
+    }
+  }
+
+  private swap(i: number, j: number): void {
+    const tmp = this.heap[i];
+    this.heap[i] = this.heap[j];
+    this.heap[j] = tmp;
+  }
+}
 
 interface DijkstraResult {
   path: NodeId[];
   distances: Map<NodeId, number>;
 }
 
+/**
+ * Dijkstra eficiente con cola de prioridad.
+ * - graph: grafo con nodos (Map<NodeId, Node>) y lista de adyacencia (Map<NodeId, Edge[]>)
+ * - start: NodeId de origen
+ * - end:   NodeId de destino
+ *
+ * Devuelve:
+ *   { path: NodeId[], distances: Map<NodeId, number> }
+ *   - path: arreglo con la ruta más corta desde start hasta end (vacío si no hay ruta)
+ *   - distances: mapa de distancias mínimas desde start a cada nodo
+ */
 export function dijkstra(
   graph: Graph,
   start: NodeId,
   end: NodeId
 ): DijkstraResult {
-  console.log("=== Iniciando Dijkstra ===");
-  console.log(`Nodo inicio: ${start}`);
-  console.log(`Nodo objetivo: ${end}`);
-
-  // 1) Inicializar estructuras
   const distances = new Map<NodeId, number>();
   const previous = new Map<NodeId, NodeId | null>();
   const visited = new Set<NodeId>();
 
-  // 1.a) Caso trivial: inicio == destino
+  // Caso trivial: inicio == destino
   if (start === end) {
-    console.log("El nodo de inicio y fin coinciden. Camino trivial.");
     distances.set(start, 0);
     return { path: [start], distances };
   }
 
-  // 2) Inicializar todas las distancias a Infinity y previous a null
-  console.log("Inicializando distancias a Infinity y previous a null...");
+  // Inicializar distancias y previous
   for (const nodeId of graph.nodes.keys()) {
     distances.set(nodeId, Infinity);
     previous.set(nodeId, null);
   }
   distances.set(start, 0);
-  console.log(`Distancia[${start}] = 0`);
 
-  // 3) Bucle principal: mientras queden nodos por “visitar”
-  while (visited.size < graph.nodes.size) {
-    // 3.1) Encontrar el nodo no visitado de menor distancia
-    let current: NodeId | null = null;
-    let minDistance = Infinity;
+  // Crear priority queue e insertar nodo inicial
+  const pq = new PriorityQueue();
+  pq.enqueue(start, 0);
 
-    for (const [nodeId, dist] of distances.entries()) {
-      if (!visited.has(nodeId) && dist < minDistance) {
-        minDistance = dist;
-        current = nodeId;
-      }
-    }
+  while (!pq.isEmpty()) {
+    const extracted = pq.dequeue();
+    if (!extracted) break;
 
-    // 3.2) Si ya no hay ningún nodo alcanzable, salimos
-    if (current === null || minDistance === Infinity) {
-      console.log("No hay más nodos alcanzables. Terminando bucle principal.");
-      break;
-    }
+    const currentNode = extracted.key;
+    const distFromHeap = extracted.priority;
 
-    console.log(`Seleccionado nodo actual: ${current} con distancia = ${minDistance}`);
-    // 3.3) Marcamos current como visitado
-    visited.add(current);
-    console.log(`Marcado como visitado: ${current}`);
+    // Si ya visitado, ignorar
+    if (visited.has(currentNode)) continue;
 
-    // 3.4) Si current es el destino, terminamos
-    if (current === end) {
-      console.log("Nodo objetivo alcanzado. Terminando bucle principal.");
-      break;
-    }
+    // Si la distancia en heap no coincide con la real, es obsoleta
+    const realDist = distances.get(currentNode)!;
+    if (distFromHeap > realDist) continue;
 
-    // 4) Relajar cada arista saliente de “current”
-    const neighbors: Edge[] = graph.adjList.get(current) ?? [];
-    console.log(`Vecinos de ${current}:`, neighbors.map(e => `${e.to}(peso=${e.weight})`));
+    // Marcar como visitado
+    visited.add(currentNode);
 
+    // Si llegamos al destino, podemos terminar
+    if (currentNode === end) break;
+
+    // Relajar aristas adyacentes
+    const neighbors: Edge[] = graph.adjList.get(currentNode) || [];
     for (const edge of neighbors) {
-      const currentDist = distances.get(current)!;
-      const alt = currentDist + edge.weight;
-      const prevDist = distances.get(edge.to) ?? Infinity;
-
-      console.log(
-        `→ Evaluando arista ${current} → ${edge.to} (peso=${edge.weight}): ` +
-        `distancia actual a ${edge.to} = ${prevDist}, posible nueva = ${alt}`
-      );
-
+      const nextNode = edge.to;
+      const alt = realDist + edge.weight;
+      const prevDist = distances.get(nextNode) ?? Infinity;
       if (alt < prevDist) {
-        distances.set(edge.to, alt);
-        previous.set(edge.to, current);
-        console.log(
-          `  Actualizo: Distancia[${edge.to}] = ${alt}, Previous[${edge.to}] = ${current}`
-        );
+        distances.set(nextNode, alt);
+        previous.set(nextNode, currentNode);
+        pq.enqueue(nextNode, alt);
       }
     }
   }
 
-  // 5) Reconstruir el camino desde “end” hacia “start”
-  console.log("Reconstruyendo camino final...");
+  // Reconstruir el camino desde "end" hacia "start"
   const path: NodeId[] = [];
   let cursor: NodeId | null = end;
-
   while (cursor !== null) {
     path.unshift(cursor);
     cursor = previous.get(cursor) ?? null;
   }
 
-  // 6) Si el camino resultante no comienza en `start`, entonces no existe ruta
+  // Si no llegó a start, no existe ruta válida
   if (path.length === 0 || path[0] !== start) {
-    console.log("No se encontró ruta válida desde el inicio hasta el objetivo.");
     return { path: [], distances };
   }
-
-  console.log("Camino encontrado:", path);
-  console.log("Distancias finales:", Array.from(distances.entries()));
-  console.log("=== Dijkstra terminado ===");
 
   return { path, distances };
 }
