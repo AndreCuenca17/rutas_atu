@@ -15,7 +15,12 @@ interface Props {
 
 export default function MapClientWrapper({ markers }: Props) {
   const { coords, loading, error } = useGeolocation();
-  const [center, setCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [center, setCenter] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
+  const [route, setRoute] = useState<{ lat: number; lng: number }[] | null>(
+    null
+  );
 
   // Cuando coords cambia de null a un objeto válido, lo volcamos en `center`
   useEffect(() => {
@@ -23,6 +28,40 @@ export default function MapClientWrapper({ markers }: Props) {
       setCenter(coords);
     }
   }, [coords]);
+
+  // Calcular la ruta más corta automáticamente
+  useEffect(() => {
+    const getShortestRoute = async () => {
+      if (!center || markers.length === 0) return;
+      // Encontrar el paradero más cercano
+      let minDist = Infinity;
+      let closestStop = markers[0];
+      for (const stop of markers) {
+        const dist = Math.hypot(center.lat - stop.lat, center.lng - stop.lng);
+        if (dist < minDist) {
+          minDist = dist;
+          closestStop = stop;
+        }
+      }
+      // Llamar a la API para obtener la ruta más corta
+      const res = await fetch("/api/shortest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          origin: center,
+          destination: { lat: closestStop.lat, lng: closestStop.lng },
+          corredor: "rojo"
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRoute(data.route);
+      } else {
+        setRoute(null);
+      }
+    };
+    getShortestRoute();
+  }, [center, markers]);
 
   if (loading) {
     return (
@@ -41,7 +80,10 @@ export default function MapClientWrapper({ markers }: Props) {
   }
 
   // Función que pasamos a Map para recibir actualizaciones cuando el usuario arrastre su marcador
-  const handleUserLocationChange = (newCenter: { lat: number; lng: number }) => {
+  const handleUserLocationChange = (newCenter: {
+    lat: number;
+    lng: number;
+  }) => {
     setCenter(newCenter);
   };
 
@@ -52,6 +94,7 @@ export default function MapClientWrapper({ markers }: Props) {
           markers={markers}
           center={center}
           onUserLocationChange={handleUserLocationChange}
+          route={route || undefined}
         />
       ) : (
         <p className="text-center mt-4">Esperando coordenadas…</p>

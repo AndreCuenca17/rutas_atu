@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
 import { MapProps } from "@/types/mapProps";
 
-const Map = ({ markers, center, onUserLocationChange }: MapProps) => {
+const Map = ({ markers, center, onUserLocationChange, route }: MapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
+  const polylineRef = useRef<google.maps.Polyline | null>(null);
 
   useEffect(() => {
     if (!center) return; // Esperamos a que center esté definido
@@ -30,8 +31,9 @@ const Map = ({ markers, center, onUserLocationChange }: MapProps) => {
       setMapInstance(mapObj);
 
       // 1) Pintar marcadores “normales” (p. ej. paraderos)
-      const { AdvancedMarkerElement } =
-        (await loader.importLibrary("marker")) as google.maps.MarkerLibrary;
+      const { AdvancedMarkerElement } = (await loader.importLibrary(
+        "marker"
+      )) as google.maps.MarkerLibrary;
       markers.forEach((markerData) => {
         new AdvancedMarkerElement({
           position: { lat: markerData.lat, lng: markerData.lng },
@@ -48,8 +50,8 @@ const Map = ({ markers, center, onUserLocationChange }: MapProps) => {
         draggable: true, // Hace el marcador arrastrable
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,              // tamaño del círculo
-          fillColor: "#4285F4",  // color de relleno (azul Google)
+          scale: 8, // tamaño del círculo
+          fillColor: "#4285F4", // color de relleno (azul Google)
           fillOpacity: 1,
           strokeColor: "white",
           strokeWeight: 2,
@@ -66,15 +68,49 @@ const Map = ({ markers, center, onUserLocationChange }: MapProps) => {
           onUserLocationChange({ lat: newLat, lng: newLng });
         }
       });
+
+      // 4) Dibujar la polyline de la ruta si existe
+      if (route && route.length > 1) {
+        const polyline = new google.maps.Polyline({
+          path: route,
+          geodesic: true,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 5,
+        });
+        polyline.setMap(mapObj);
+        polylineRef.current = polyline;
+      }
     };
 
     initMap();
-  }, [center, markers, onUserLocationChange]);
+  }, [center, markers, onUserLocationChange, route]);
+
+  // Limpiar polyline si cambia la ruta
+  useEffect(() => {
+    if (polylineRef.current && mapInstance) {
+      polylineRef.current.setMap(null);
+      polylineRef.current = null;
+    }
+    if (route && route.length > 1 && mapInstance) {
+      const polyline = new google.maps.Polyline({
+        path: route,
+        geodesic: true,
+        strokeColor: "#FF0000",
+        strokeOpacity: 0.8,
+        strokeWeight: 5,
+      });
+      polyline.setMap(mapInstance);
+      polylineRef.current = polyline;
+    }
+  }, [route, mapInstance]);
 
   return (
     <div className="w-full h-full">
       {!center && (
-        <p className="text-center mt-4">Obteniendo ubicación del dispositivo…</p>
+        <p className="text-center mt-4">
+          Obteniendo ubicación del dispositivo…
+        </p>
       )}
       <div
         ref={mapRef}

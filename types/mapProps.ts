@@ -14,4 +14,8 @@ export interface MapProps {
    * Recibe el nuevo { lat, lng }.
    */
   onUserLocationChange?: (newCenter: { lat: number; lng: number }) => void;
+  /**
+   * Ruta a graficar en el mapa, como array de puntos {lat, lng}
+   */
+  route?: { lat: number; lng: number }[];
 }

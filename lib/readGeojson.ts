@@ -1,49 +1,51 @@
-// Funciones para leer y convertir archivos .geojson en estructuras de grafo.
+// ✅ Archivo: lib/geojsonToGraph.ts
+import fs from "fs";
+import path from "path";
+import { Graph, NodeId, Node, Edge } from "@/types/graph";
 
-import { Graph, Node, NodeId, Edge } from "@/types/graph";
-
-export async function readGeojsonAsGraph(filePath: string): Promise<Graph> {
-  const res = await fetch(filePath);
-  const data = await res.json();
+export async function readGeojsonToGraph(): Promise<Graph> {
+  const filePath = path.join(process.cwd(), "data/callePrincipal.geojson");
+  const raw = fs.readFileSync(filePath, "utf-8");
+  const geojson = JSON.parse(raw);
 
   const nodes: Map<NodeId, Node> = new Map();
   const adjList: Map<NodeId, Edge[]> = new Map();
 
-  let edgeCount = 0;
+  for (const feature of geojson.features) {
+    if (feature.geometry?.type !== "LineString") continue;
+    const coords = feature.geometry.coordinates;
 
-  for (const feature of data.features) {
-    const geometry = feature.geometry;
-    const properties = feature.properties || {};
+    for (let i = 0; i < coords.length - 1; i++) {
+      const [lon1, lat1] = coords[i];
+      const [lon2, lat2] = coords[i + 1];
 
-    if (geometry.type === "LineString") {
-      const coordinates = geometry.coordinates;
+      const id1 = `${lat1},${lon1}`;
+      const id2 = `${lat2},${lon2}`;
 
-      for (let i = 0; i < coordinates.length - 1; i++) {
-        const [lon1, lat1] = coordinates[i];
-        const [lon2, lat2] = coordinates[i + 1];
+      nodes.set(id1, { lat: lat1, lng: lon1 });
+      nodes.set(id2, { lat: lat2, lng: lon2 });
 
-        const node1Id = `${lat1},${lon1}`;
-        const node2Id = `${lat2},${lon2}`;
+      const weight = haversine(lat1, lon1, lat2, lon2);
 
-        // Añadir nodos
-        nodes.set(node1Id, { lat: lat1, lng: lon1 });
-        nodes.set(node2Id, { lat: lat2, lng: lon2 });
+      if (!adjList.has(id1)) adjList.set(id1, []);
+      if (!adjList.has(id2)) adjList.set(id2, []);
 
-        // Calcular peso
-        const weight = properties.length ?? 1;
-
-        // Añadir arista en ambas direcciones (si deseas grafo no dirigido)
-        if (!adjList.has(node1Id)) adjList.set(node1Id, []);
-        adjList.get(node1Id)?.push({ from: node1Id, to: node2Id, weight });
-
-        if (!adjList.has(node2Id)) adjList.set(node2Id, []);
-        adjList.get(node2Id)?.push({ from: node2Id, to: node1Id, weight });
-
-        edgeCount++;
-      }
+      adjList.get(id1)!.push({ from: id1, to: id2, weight });
+      adjList.get(id2)!.push({ from: id2, to: id1, weight }); // bidireccional
     }
   }
 
-  console.log(`✅ Grafo cargado con ${nodes.size} nodos y ${edgeCount} aristas.`);
   return { nodes, adjList };
+}
+
+function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371e3; // metros
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
