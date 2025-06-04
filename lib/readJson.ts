@@ -24,7 +24,7 @@ export function readMarkersFromJson(filename: string): Marker[] {
       icono = "/estacionlinea2.png";
     }
 
-    return rawMarkers.map((item: any) => ({
+    return rawMarkers.map((item: Marker) => ({
       lat: Number(item.lat),
       lng: Number(item.lng),
       title: String(item.title),

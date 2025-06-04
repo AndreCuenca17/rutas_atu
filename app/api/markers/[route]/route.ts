@@ -2,25 +2,27 @@
 import { readMarkersFromJson } from "@/lib/readJson";
 import { NextResponse } from "next/server";
 
-export async function GET(
-  request: Request, 
-  { params }: { params: { route: string } }
-) {
+export async function GET(request: Request) {
+  const { pathname } = new URL(request.url);
+  const route = pathname.split("/").pop(); // obtiene el valor de [route]
+  console.log("Parámetro recibido:", route);
+  const fileName = `paraderos_${route}.json`;
+  console.log("Nombre de archivo a buscar:", fileName);
+
   try {
-    console.log("Parámetro recibido:", params.route); 
-    const fileName = `paraderos_${params.route}.json`;
-    console.log("Nombre de archivo a buscar:", fileName); 
-    
     const markers = readMarkersFromJson(fileName);
-    console.log("Markers encontrados:", markers.length); 
-    
+    console.log("Markers encontrados:", markers.length);
+
     return NextResponse.json(markers);
   } catch (error) {
-    console.error("Error completo:", error); 
-    return NextResponse.json({ 
-      error: 'Route not found',
-      details: error instanceof Error ? error.message : 'Unknown error',
-      fileName: `paraderos_${params.route}.json`
-    }, { status: 404 });
+    console.error("Error completo:", error);
+    return NextResponse.json(
+      {
+        error: "Route not found",
+        details: error instanceof Error ? error.message : "Unknown error",
+        fileName: `paraderos_${route}.json`,
+      },
+      { status: 404 }
+    );
   }
 }

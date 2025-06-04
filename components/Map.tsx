@@ -109,7 +109,6 @@ const Map = ({
       userMarkerRef.current.setMap(null);
       userMarkerRef.current = null;
     }
-    const zoom = mapInstance.getZoom() || 15;
     const marker = new google.maps.Marker({
       position: center,
       map: mapInstance,

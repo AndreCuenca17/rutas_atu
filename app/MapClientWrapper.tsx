@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function MapClientWrapper({ markers }: Props) {
-  const { coords, loading, error } = useGeolocation();
+  const { coords, error } = useGeolocation();
   const { currentRoute } = useRoute();
   // Centro por defecto (Lima)
   const DEFAULT_CENTER = { lat: -12.0464, lng: -77.0428 };
