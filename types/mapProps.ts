@@ -18,4 +18,8 @@ export interface MapProps {
    * Ruta a graficar en el mapa, como array de puntos {lat, lng}
    */
   route?: { lat: number; lng: number }[];
+  /**
+   * Color de la ruta a graficar (hex o nombre CSS)
+   */
+  routeColor?: string;
 }

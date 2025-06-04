@@ -7,16 +7,16 @@ export async function GET(
   { params }: { params: { route: string } }
 ) {
   try {
-    console.log("Parámetro recibido:", params.route); // Debug
+    console.log("Parámetro recibido:", params.route); 
     const fileName = `paraderos_${params.route}.json`;
-    console.log("Nombre de archivo a buscar:", fileName); // Debug
+    console.log("Nombre de archivo a buscar:", fileName); 
     
     const markers = readMarkersFromJson(fileName);
-    console.log("Markers encontrados:", markers.length); // Debug
+    console.log("Markers encontrados:", markers.length); 
     
     return NextResponse.json(markers);
   } catch (error) {
-    console.error("Error completo:", error); // Debug mejorado
+    console.error("Error completo:", error); 
     return NextResponse.json({ 
       error: 'Route not found',
       details: error instanceof Error ? error.message : 'Unknown error',

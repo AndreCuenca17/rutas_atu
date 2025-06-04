@@ -1,5 +1,3 @@
-// Archivo: dijkstra.ts
-
 import { Graph, NodeId, Edge } from "@/types/graph";
 
 /**

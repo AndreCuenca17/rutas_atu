@@ -1,4 +1,3 @@
-// ✅ Archivo: lib/geojsonToGraph.ts
 import fs from "fs";
 import path from "path";
 import { Graph, NodeId, Node, Edge } from "@/types/graph";

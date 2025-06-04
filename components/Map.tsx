@@ -5,117 +5,263 @@ import { useEffect, useRef, useState } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
 import { MapProps } from "@/types/mapProps";
 
-const Map = ({ markers, center, onUserLocationChange, route }: MapProps) => {
+const Map = ({
+  markers,
+  center,
+  onUserLocationChange,
+  route,
+  routeColor,
+}: MapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
+  const markerObjectsRef = useRef<google.maps.Marker[]>([]);
+  const userMarkerRef = useRef<google.maps.Marker | null>(null);
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
 
+  // Inicializar el mapa solo una vez
   useEffect(() => {
-    if (!center) return; // Esperamos a que center esté definido
-
-    const initMap = async () => {
-      const loader = new Loader({
-        apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        version: "quarterly",
-        libraries: ["places"],
-      });
-
-      const { Map: GoogleMap } = await loader.importLibrary("maps");
+    if (mapInstance || !mapRef.current) return;
+    const loader = new Loader({
+      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+      version: "quarterly",
+      libraries: ["places"],
+    });
+    loader.importLibrary("maps").then(({ Map: GoogleMap }) => {
       const options: google.maps.MapOptions = {
-        center,
-        zoom: 14,
+        center: center,
+        zoom: 15,
         mapId: "map",
       };
-
       const mapObj = new GoogleMap(mapRef.current as HTMLElement, options);
       setMapInstance(mapObj);
+    });
+  }, [mapInstance]);
 
-      // 1) Pintar marcadores “normales” (p. ej. paraderos)
-      const { AdvancedMarkerElement } = (await loader.importLibrary(
-        "marker"
-      )) as google.maps.MarkerLibrary;
-      markers.forEach((markerData) => {
-        new AdvancedMarkerElement({
-          position: { lat: markerData.lat, lng: markerData.lng },
-          map: mapObj,
-          title: markerData.title,
-        });
+  // Actualizar centro del mapa si cambia
+  useEffect(() => {
+    if (mapInstance && center) {
+      mapInstance.setCenter(center);
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setPosition(center);
+      }
+    }
+  }, [center, mapInstance]);
+
+  // Actualizar marcadores de paraderos
+  useEffect(() => {
+    if (!mapInstance) return;
+    // Limpiar marcadores anteriores
+    markerObjectsRef.current.forEach((m) => m.setMap(null));
+    markerObjectsRef.current = [];
+    const getIconSize = (zoom: number) => {
+      if (zoom >= 17) return 36;
+      if (zoom >= 15) return 28;
+      if (zoom >= 13) return 20;
+      return 16;
+    };
+    const zoom = mapInstance.getZoom() || 15;
+    markers.forEach((markerData) => {
+      const iconSize = getIconSize(zoom);
+      const marker = new google.maps.Marker({
+        position: { lat: markerData.lat, lng: markerData.lng },
+        map: mapInstance,
+        title: markerData.title,
+        icon: markerData.icono
+          ? {
+              url: markerData.icono,
+              scaledSize: new google.maps.Size(iconSize, iconSize),
+            }
+          : undefined,
       });
-
-      // 2) Agregar marcador de usuario, ahora arrastrable
-      const userMarker = new google.maps.Marker({
-        position: center,
-        map: mapObj,
-        title: "Tu ubicación",
-        draggable: true, // Hace el marcador arrastrable
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 8, // tamaño del círculo
-          fillColor: "#4285F4", // color de relleno (azul Google)
-          fillOpacity: 1,
-          strokeColor: "white",
-          strokeWeight: 2,
-        },
-      });
-
-      // 3) Escuchar cuando termine de arrastrar
-      userMarker.addListener("dragend", () => {
-        const newPos = userMarker.getPosition();
-        if (newPos && onUserLocationChange) {
-          const newLat = newPos.lat();
-          const newLng = newPos.lng();
-          // Notificamos al wrapper que la ubicación cambió
-          onUserLocationChange({ lat: newLat, lng: newLng });
+      markerObjectsRef.current.push(marker);
+    });
+    // Actualizar tamaño de iconos al cambiar el zoom
+    const zoomListener = mapInstance.addListener("zoom_changed", () => {
+      const zoom = mapInstance.getZoom() || 15;
+      const iconSize = getIconSize(zoom);
+      markerObjectsRef.current.forEach((marker, idx) => {
+        const markerData = markers[idx];
+        if (markerData && markerData.icono) {
+          marker.setIcon({
+            url: markerData.icono,
+            scaledSize: new google.maps.Size(iconSize, iconSize),
+          });
         }
       });
-
-      // 4) Dibujar la polyline de la ruta si existe
-      if (route && route.length > 1) {
-        const polyline = new google.maps.Polyline({
-          path: route,
-          geodesic: true,
-          strokeColor: "#FF0000",
-          strokeOpacity: 0.8,
-          strokeWeight: 5,
+      // Icono de usuario
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setIcon({
+          url: "/ubicacionactual.png",
+          scaledSize: new google.maps.Size(iconSize + 4, iconSize + 4),
         });
-        polyline.setMap(mapObj);
-        polylineRef.current = polyline;
       }
+    });
+    return () => {
+      google.maps.event.removeListener(zoomListener);
     };
+  }, [markers, mapInstance]);
 
-    initMap();
-  }, [center, markers, onUserLocationChange, route]);
-
-  // Limpiar polyline si cambia la ruta
+  // Actualizar marcador de usuario
   useEffect(() => {
-    if (polylineRef.current && mapInstance) {
+    if (!mapInstance || !center) return;
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setMap(null);
+      userMarkerRef.current = null;
+    }
+    const zoom = mapInstance.getZoom() || 15;
+    const marker = new google.maps.Marker({
+      position: center,
+      map: mapInstance,
+      title: "Tu ubicación",
+      draggable: true,
+      icon: {
+        url: "/ubicacionactual.png",
+        scaledSize: new google.maps.Size(32, 32),
+      },
+    });
+    marker.addListener("dragend", () => {
+      const newPos = marker.getPosition();
+      if (newPos && onUserLocationChange) {
+        onUserLocationChange({ lat: newPos.lat(), lng: newPos.lng() });
+      }
+    });
+    userMarkerRef.current = marker;
+    return () => {
+      marker.setMap(null);
+    };
+  }, [center, mapInstance, onUserLocationChange]);
+
+  // Actualizar polyline de la ruta
+  useEffect(() => {
+    if (!mapInstance) return;
+    if (polylineRef.current) {
       polylineRef.current.setMap(null);
       polylineRef.current = null;
     }
-    if (route && route.length > 1 && mapInstance) {
+    // Cerrar InfoWindow anterior si existe
+    if (infoWindowRef.current) {
+      infoWindowRef.current.close();
+      infoWindowRef.current = null;
+    }
+    if (route && route.length > 1) {
       const polyline = new google.maps.Polyline({
         path: route,
         geodesic: true,
-        strokeColor: "#FF0000",
-        strokeOpacity: 0.8,
-        strokeWeight: 5,
+        strokeColor: routeColor || "#FF0000",
+        strokeOpacity: 1,
+        strokeWeight: 4,
       });
       polyline.setMap(mapInstance);
       polylineRef.current = polyline;
+
+      // Calcular distancia total y mostrar InfoWindow como antes
+      let totalMeters = 0;
+      for (let i = 1; i < route.length; i++) {
+        const lat1 = route[i - 1].lat;
+        const lng1 = route[i - 1].lng;
+        const lat2 = route[i].lat;
+        const lng2 = route[i].lng;
+        // Haversine
+        const R = 6371e3;
+        const toRad = (deg: number) => (deg * Math.PI) / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLng = toRad(lng2 - lng1);
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(lat1)) *
+            Math.cos(toRad(lat2)) *
+            Math.sin(dLng / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        totalMeters += R * c;
+      }
+      // Tiempo estimado caminando (5 km/h = 1.39 m/s)
+      const seconds = totalMeters / 1.39;
+      const minutes = Math.round(seconds / 60);
+      // Mostrar info en el mapa con estilo similar a Google Maps Directions
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="display:flex;align-items:center;gap:8px;min-width:120px;user-select:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;">
+            <div style="display:flex;flex-direction:column;">
+              <span style="font-size:19px;font-weight:600;color:#222;line-height:1;user-select:none;">${minutes} min</span>
+              <span style="font-size:15px;color:#444;line-height:1.2;user-select:none;">a pie, 5 km/h</span>
+            </div>
+          </div>
+          <div style="font-size:13px;color:#222;margin-top:2px;padding-bottom:4px;user-select:none;">Distancia: ${(
+            totalMeters / 1000
+          ).toFixed(2)} km</div>
+          <style>
+            .gm-ui-hover-effect {
+              top: 0px !important;
+              right: 30px !important;
+              width: 20px !important;
+              height: 20px !important;
+            }
+            .gm-ui-hover-effect > span {
+              font-size: 16px !important;
+            }
+            .gm-style-iw, .gm-style-iw * {
+              user-select: none !important;
+              -webkit-user-select: none !important;
+              -moz-user-select: none !important;
+              -ms-user-select: none !important;
+            }
+            .gm-ui-hover-effect:focus, .gm-ui-hover-effect:active {
+              outline: none !important;
+              box-shadow: none !important;
+            }
+          </style>
+        `,
+      });
+      // Mostrar en el punto medio de la ruta
+      const midIdx = Math.floor(route.length / 2);
+      infoWindow.setPosition(route[midIdx]);
+      infoWindow.open(mapInstance);
+      infoWindowRef.current = infoWindow;
     }
-  }, [route, mapInstance]);
+  }, [route, mapInstance, routeColor]);
+
+  // Ajustar fitBounds solo cuando cambian los markers o la ubicación
+  const prevMarkersRef = useRef<null | string>(null);
+  const prevCenterRef = useRef<null | { lat: number; lng: number }>(null);
+  useEffect(() => {
+    if (!center || !markers || markers.length === 0 || !mapInstance) return;
+    const markersKey = JSON.stringify(markers.map((m) => [m.lat, m.lng]));
+    const centerChanged =
+      !prevCenterRef.current ||
+      prevCenterRef.current.lat !== center.lat ||
+      prevCenterRef.current.lng !== center.lng;
+    const markersChanged = prevMarkersRef.current !== markersKey;
+    if (!centerChanged && !markersChanged) return;
+    prevMarkersRef.current = markersKey;
+    prevCenterRef.current = center;
+    let minDist = Infinity;
+    let closestStop = markers[0];
+    for (const stop of markers) {
+      const dist = Math.hypot(center.lat - stop.lat, center.lng - stop.lng);
+      if (dist < minDist) {
+        minDist = dist;
+        closestStop = stop;
+      }
+    }
+    const threshold = 0.01;
+    if (minDist > threshold) {
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend(new google.maps.LatLng(center.lat, center.lng));
+      bounds.extend(new google.maps.LatLng(closestStop.lat, closestStop.lng));
+      const targetCenter = bounds.getCenter();
+      mapInstance.panTo(targetCenter);
+      window.setTimeout(() => {
+        mapInstance.fitBounds(bounds);
+      }, 400);
+    } else {
+      mapInstance.panTo(center);
+    }
+  }, [center, markers, mapInstance]);
 
   return (
     <div className="w-full h-full">
-      {!center && (
-        <p className="text-center mt-4">
-          Obteniendo ubicación del dispositivo…
-        </p>
-      )}
-      <div
-        ref={mapRef}
-        className={`w-full h-full ${!center ? "hidden" : ""}`}
-      />
+      <div ref={mapRef} className="w-full h-full" />
     </div>
   );
 };
