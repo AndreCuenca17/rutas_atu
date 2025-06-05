@@ -1,10 +1,16 @@
 import { Graph, NodeId, Node, Edge } from "@/types/graph";
 
 export async function readGeojsonToGraph(): Promise<Graph> {
-  // Leer el archivo desde /public usando fetch
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL || ""}/callePrincipal.geojson`
-  );
+  // Construir la URL absoluta según el entorno
+  let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  if (!baseUrl) {
+    if (process.env.VERCEL_URL) {
+      baseUrl = `https://${process.env.VERCEL_URL}`;
+    } else {
+      baseUrl = "http://localhost:3000";
+    }
+  }
+  const res = await fetch(`${baseUrl}/callePrincipal.geojson`);
   if (!res.ok) throw new Error("No se pudo cargar callePrincipal.geojson");
   const geojson = await res.json();
 
