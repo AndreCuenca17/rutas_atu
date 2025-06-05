@@ -1,18 +1,11 @@
+import fs from "fs";
+import path from "path";
 import { Graph, NodeId, Node, Edge } from "@/types/graph";
 
 export async function readGeojsonToGraph(): Promise<Graph> {
-  // Construir la URL absoluta según el entorno
-  let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-  if (!baseUrl) {
-    if (process.env.VERCEL_URL) {
-      baseUrl = `https://${process.env.VERCEL_URL}`;
-    } else {
-      baseUrl = "http://localhost:3000";
-    }
-  }
-  const res = await fetch(`${baseUrl}/callePrincipal.geojson`);
-  if (!res.ok) throw new Error("No se pudo cargar callePrincipal.geojson");
-  const geojson = await res.json();
+  const filePath = path.join(process.cwd(), "data/callePrincipal.geojson");
+  const raw = fs.readFileSync(filePath, "utf-8");
+  const geojson = JSON.parse(raw);
 
   const nodes: Map<NodeId, Node> = new Map();
   const adjList: Map<NodeId, Edge[]> = new Map();
@@ -44,12 +37,7 @@ export async function readGeojsonToGraph(): Promise<Graph> {
   return { nodes, adjList };
 }
 
-function haversine(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
+function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371e3; // metros
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
