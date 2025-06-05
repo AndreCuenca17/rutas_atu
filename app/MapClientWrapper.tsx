@@ -66,6 +66,7 @@ export default function MapClientWrapper({ markers }: Props) {
         body: JSON.stringify({
           origin: center,
           destination: { lat: closestStop.lat, lng: closestStop.lng },
+          corredor: currentRoute,
         }),
       });
       if (res.ok) {
