@@ -1,12 +1,6 @@
-import fs from "fs";
-import path from "path";
-import { Graph, NodeId, Node, Edge } from "@/types/graph";
+import { Graph, Node, NodeId, Edge } from "@/types/graph";
 
-export async function readGeojsonToGraph(): Promise<Graph> {
-  const filePath = path.join(process.cwd(), "data/callePrincipal.geojson");
-  const raw = fs.readFileSync(filePath, "utf-8");
-  const geojson = JSON.parse(raw);
-
+export function convertGeojsonToGraph(geojson: any): Graph {
   const nodes: Map<NodeId, Node> = new Map();
   const adjList: Map<NodeId, Edge[]> = new Map();
 
@@ -30,7 +24,7 @@ export async function readGeojsonToGraph(): Promise<Graph> {
       if (!adjList.has(id2)) adjList.set(id2, []);
 
       adjList.get(id1)!.push({ from: id1, to: id2, weight });
-      adjList.get(id2)!.push({ from: id2, to: id1, weight }); // bidireccional
+      adjList.get(id2)!.push({ from: id2, to: id1, weight });
     }
   }
 
