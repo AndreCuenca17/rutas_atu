@@ -1,6 +1,20 @@
 import { Graph, Node, NodeId, Edge } from "@/types/graph";
 
-export function convertGeojsonToGraph(geojson: any): Graph {
+interface GeoJsonFeature {
+  type: "Feature";
+  geometry: {
+    type: string;
+    coordinates: number[][];
+  };
+  properties?: Record<string, any>;
+}
+
+interface GeoJson {
+  type: "FeatureCollection";
+  features: GeoJsonFeature[];
+}
+
+export function convertGeojsonToGraph(geojson: GeoJson): Graph {
   const nodes: Map<NodeId, Node> = new Map();
   const adjList: Map<NodeId, Edge[]> = new Map();
 
@@ -31,7 +45,12 @@ export function convertGeojsonToGraph(geojson: any): Graph {
   return { nodes, adjList };
 }
 
-function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
+function haversine(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
   const R = 6371e3; // metros
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
