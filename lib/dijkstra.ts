@@ -147,9 +147,10 @@ export function dijkstra(
   const path: NodeId[] = [];
   let cursor: NodeId | null = end;
   while (cursor !== null) {
-    path.unshift(cursor);
+    path.push(cursor); // Insertar al final
     cursor = previous.get(cursor) ?? null;
   }
+  path.reverse(); // Invertir una sola vez al final
 
   // Si no llegó a start, no existe ruta válida
   if (path.length === 0 || path[0] !== start) {
