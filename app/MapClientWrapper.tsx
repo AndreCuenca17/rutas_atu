@@ -18,11 +18,7 @@ interface Props {
 export default function MapClientWrapper({ markers }: Props) {
   const { coords, error } = useGeolocation();
   const { currentRoute } = useRoute();
-  const {
-    geojson,
-    loading: geojsonLoading,
-    error: geojsonError,
-  } = useGeojson();
+  const { geojson } = useGeojson();
   // Centro por defecto (Lima)
   const DEFAULT_CENTER = { lat: -12.0464, lng: -77.0428 };
   const [center, setCenter] = useState<{ lat: number; lng: number }>(
@@ -83,7 +79,7 @@ export default function MapClientWrapper({ markers }: Props) {
           })
           .filter((n): n is { lat: number; lng: number } => !!n);
         setRoute(coords);
-      } catch (e) {
+      } catch {
         setRoute(null);
       }
     };
