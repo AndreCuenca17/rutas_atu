@@ -41,7 +41,7 @@ const Map = ({
   // Actualizar centro del mapa si cambia
   useEffect(() => {
     if (mapInstance && center) {
-      mapInstance.setCenter(center);
+      mapInstance.panTo(center); // animación suave
       if (userMarkerRef.current) {
         userMarkerRef.current.setPosition(center);
       }

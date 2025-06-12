@@ -4,6 +4,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { useGeojson } from "@/hooks/useGeojson";
 import { Marker } from "@/types/marker";
 import { useRoute } from "@/context/RouteContext";
 
@@ -17,6 +18,11 @@ interface Props {
 export default function MapClientWrapper({ markers }: Props) {
   const { coords, error } = useGeolocation();
   const { currentRoute } = useRoute();
+  const {
+    geojson,
+    loading: geojsonLoading,
+    error: geojsonError,
+  } = useGeojson();
   // Centro por defecto (Lima)
   const DEFAULT_CENTER = { lat: -12.0464, lng: -77.0428 };
   const [center, setCenter] = useState<{ lat: number; lng: number }>(
@@ -45,10 +51,10 @@ export default function MapClientWrapper({ markers }: Props) {
     }
   }, [coords]);
 
-  // Calcular la ruta más corta automáticamente
+  // Calcular la ruta más corta automáticamente usando geojson cacheado
   useEffect(() => {
     const getShortestRoute = async () => {
-      if (!center || markers.length === 0) return;
+      if (!center || markers.length === 0 || !geojson) return;
       // Encontrar el paradero más cercano
       let minDist = Infinity;
       let closestStop = markers[0];
@@ -59,25 +65,30 @@ export default function MapClientWrapper({ markers }: Props) {
           closestStop = stop;
         }
       }
-      // Llamar a la API para obtener la ruta más corta
-      const res = await fetch("/api/shortest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          origin: center,
-          destination: { lat: closestStop.lat, lng: closestStop.lng },
-          corredor: currentRoute,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setRoute(data.route);
-      } else {
+      // Calcular ruta en el cliente usando el geojson cacheado
+      try {
+        // Importar dinámicamente para evitar SSR issues
+        const { convertGeojsonToGraph } = await import("@/lib/readGeojson");
+        const { findClosestNode } = await import("@/lib/closestNode");
+        const { dijkstra } = await import("@/lib/dijkstra");
+        const graph = convertGeojsonToGraph(geojson);
+        const start = findClosestNode(graph, center.lat, center.lng);
+        const end = findClosestNode(graph, closestStop.lat, closestStop.lng);
+        const result = dijkstra(graph, start, end);
+        const coords = result.path
+          .map((id) => {
+            const node = graph.nodes.get(id);
+            if (!node) return undefined;
+            return { lat: node.lat, lng: node.lng };
+          })
+          .filter((n): n is { lat: number; lng: number } => !!n);
+        setRoute(coords);
+      } catch (e) {
         setRoute(null);
       }
     };
     getShortestRoute();
-  }, [center, markers, currentRoute]);
+  }, [center, markers, currentRoute, geojson]);
 
   // Función que pasamos a Map para recibir actualizaciones cuando el usuario arrastre su marcador
   const handleUserLocationChange = (newCenter: {
