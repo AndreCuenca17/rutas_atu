@@ -12,7 +12,7 @@ type Row = {
 
 type Feature = {
   type: 'Feature';
-  properties: any;
+  properties: Record<string, unknown>;
   geometry: {
     type: 'Polygon' | 'LineString';
     coordinates: number[][][] | number[][];
@@ -20,7 +20,15 @@ type Feature = {
   id: string;
 };
 
-export async function fetchGeojsonFromDB() {
+type FeatureCollection = {
+  type: 'FeatureCollection';
+  features: Feature[];
+  generator: string;
+  copyright: string;
+  timestamp: string;
+};
+
+export async function fetchGeojsonFromDB(): Promise<FeatureCollection> {
   const [rows] = await db.query<RowDataPacket[] & Row[]>(`
     SELECT feature_id, geometry_type, lat, lng, properties, coordinate_order
     FROM geo_features

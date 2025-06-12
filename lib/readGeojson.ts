@@ -1,15 +1,15 @@
 import { Graph, Node, NodeId, Edge } from "@/types/graph";
 
-interface GeoJsonFeature {
+export interface GeoJsonFeature {
   type: "Feature";
   geometry: {
     type: string;
     coordinates: number[][];
   };
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
 }
 
-interface GeoJson {
+export interface GeoJson {
   type: "FeatureCollection";
   features: GeoJsonFeature[];
 }
