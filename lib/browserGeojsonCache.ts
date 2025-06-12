@@ -1,5 +1,6 @@
 // lib/browserGeojsonCache.ts
 // Utilidades para guardar y leer geojson pesado en IndexedDB del navegador
+import type { GeoJson } from "./readGeojson";
 
 const DB_NAME = "atu-geojson-cache";
 const STORE_NAME = "geojson";
@@ -16,7 +17,7 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function saveGeojsonToCache(data: any) {
+export async function saveGeojsonToCache(data: GeoJson): Promise<void> {
   const db = await openDB();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
@@ -26,9 +27,9 @@ export async function saveGeojsonToCache(data: any) {
   });
 }
 
-export async function getGeojsonFromCache(): Promise<any | null> {
+export async function getGeojsonFromCache(): Promise<GeoJson | null> {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
+  return new Promise<GeoJson | null>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readonly");
     const req = tx.objectStore(STORE_NAME).get(KEY);
     req.onsuccess = () => resolve(req.result ?? null);
