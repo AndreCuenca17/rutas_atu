@@ -1,0 +1,10 @@
+version: '3'
+services:
+  nextjs:
+    build: .
+    container_name: ProyectoADA
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+    restart: always

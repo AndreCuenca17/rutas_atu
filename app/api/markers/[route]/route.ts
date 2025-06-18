@@ -1,6 +1,6 @@
 // app/api/markers/[route]/route.ts
 import { readMarkersFromJson } from "@/lib/readJson";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const { pathname } = new URL(request.url);
@@ -24,5 +24,6 @@ export async function GET(request: Request) {
       },
       { status: 404 }
     );
+
   }
 }
