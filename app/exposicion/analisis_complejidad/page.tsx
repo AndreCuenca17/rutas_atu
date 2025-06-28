@@ -893,23 +893,23 @@ const AnalisisComplejidad: React.FC = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-green-200 border border-green-300 rounded"></div>
-                  <span>O(1) - Constante</span>
+                  <span className="text-black">O(1) - Constante</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-blue-200 border border-blue-300 rounded"></div>
-                  <span>O(log n) - Logarítmica</span>
+                  <span className="text-black" >O(log n) - Logarítmica</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-yellow-200 border border-yellow-300 rounded"></div>
-                  <span>O(n) - Lineal</span>
+                  <span className="text-black">O(n) - Lineal</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-orange-200 border border-orange-300 rounded"></div>
-                  <span>O(n log n) - Lineal-logarítmica</span>
+                  <span className="text-black">O(n log n) - Lineal-logarítmica</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-red-200 border border-red-300 rounded"></div>
-                  <span>O(n²) - Cuadrática</span>
+                  <span className="text-black">O(n²) - Cuadrática</span>
                 </div>
               </div>
             </div>
