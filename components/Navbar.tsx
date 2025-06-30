@@ -4,6 +4,7 @@ import { useRoute } from "@/context/RouteContext";
 import { Menu } from "lucide-react";
 import Drawer from "./Drawer";
 import Image from "next/image";
+import Link from "next/link";
 
 const Navbar = () => {
   // Usa solo el estado del contexto, elimina el useState local
@@ -12,14 +13,16 @@ const Navbar = () => {
   return (
     <nav className="bg-[#054D94] w-full top-0 left-0 z-50 relative">
       <div className="flex justify-center py-4">
-        <Image
-          src={"/logoatu.png"}
-          alt="ATU Logo"
-          className="h-12"
-          width={180}
-          height={60}
-          priority
-        />
+        <Link href={"/"}>
+          <Image
+            src={"/logoatu.png"}
+            alt="ATU Logo"
+            className="h-12"
+            width={180}
+            height={60}
+            priority
+          />
+        </Link>
       </div>
       <div className="absolute top-0 right-5 flex h-full items-center">
         <button

@@ -29,7 +29,17 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
     console.log(`Ruta seleccionada: ${route}`);
     setCurrentRoute(route);
     onClose(); // Cerrar drawer después de seleccionar
+
+    if (["linea1", "linea2"].includes(route)) {
+      setIsMetrosOpen(!isMetrosOpen);
+    }
+
+    if (["rojo", "morado", "azul"].includes(route)) {
+      setIsCorredoresOpen(!isCorredoresOpen);
+    }
   };
+
+  const handleGoToAnalysis = () => {};
 
   return (
     <aside className="fixed top-0 right-0 h-full w-full sm:w-90 bg-white text-black shadow-lg flex flex-col z-50 transition-transform duration-300 ease-in-out">
@@ -110,7 +120,9 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
               <div
                 className="transform transition-transform duration-200"
                 style={{
-                  transform: isCorredoresOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transform: isCorredoresOpen
+                    ? "rotate(180deg)"
+                    : "rotate(0deg)",
                 }}
               >
                 <ChevronDown size={20} />
@@ -158,7 +170,10 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
         {/* Botones de presentación - Ahora al final */}
         <div className="p-6 pt-0 space-y-3">
           <Link href="/exposicion/analisis_complejidad">
-            <button className="w-full flex rounded-xl items-center justify-between p-4 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 transition-all duration-200">
+            <button
+              className="w-full flex rounded-xl items-center justify-between p-4 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 transition-all duration-200"
+              onClick={onClose}
+            >
               <div className="flex items-center space-x-3">
                 <LineChart size={20} />
                 <span className="font-medium">Análisis de complejidad</span>
@@ -168,7 +183,6 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
               </div>
             </button>
           </Link>
-          
         </div>
       </div>
 
