@@ -11,7 +11,7 @@ const Navbar = () => {
   const { isDrawerOpen, setIsDrawerOpen } = useRoute();
 
   return (
-    <nav className="bg-[#054D94] w-full top-0 left-0 z-50 relative">
+    <nav className="bg-[#054D94] sticky w-full top-0 left-0 z-50 relative">
       <div className="flex justify-center py-4">
         <Link href={"/"}>
           <Image

@@ -7,6 +7,7 @@ import {
   Train,
   Bus,
   LineChart,
+  Video,
 } from "lucide-react";
 import { useRoute } from "@/context/RouteContext";
 import Link from "next/link";
@@ -19,7 +20,13 @@ interface DrawerProps {
 const Drawer = ({ isOpen, onClose }: DrawerProps) => {
   const [isMetrosOpen, setIsMetrosOpen] = useState(false);
   const [isCorredoresOpen, setIsCorredoresOpen] = useState(false);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
   const { setCurrentRoute } = useRoute();
+
+  const videoUrl = "https://www.youtube.com/embed/pVfj6mxhdMw";
+  const videoTitle = "Comparación de Algoritmo de Dijkstra";
+  const videoDescription =
+    "Análisis de complejidad del algoritmo de Dijkstra comparado con otros algoritmos de caminos más cortos.";
 
   if (!isOpen) return null;
 
@@ -34,6 +41,28 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
 
     if (["rojo", "morado", "azul"].includes(route)) {
       setIsCorredoresOpen(!isCorredoresOpen);
+    }
+  };
+
+  const handleButtonVideo = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault(); // Prevenir navegación del Link
+    setIsVideoOpen(true);
+  };
+
+  const closeVideo = () => {
+    setIsVideoOpen(false);
+  };
+
+  // Agregar estas funciones aquí:
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>): void => {
+    if (e.target === e.currentTarget) {
+      closeVideo();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
+    if (e.key === "Escape") {
+      closeVideo();
     }
   };
 
@@ -164,7 +193,7 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
         </div>
 
         {/* Botones de presentación - Ahora al final */}
-        <div className="p-6 pt-0 space-y-3">
+        <div className="p-6 pt-0 space-y-4 flex flex-col">
           <Link href="/exposicion/analisis_complejidad">
             <button
               className="w-full flex rounded-xl items-center justify-between p-4 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 transition-all duration-200"
@@ -179,6 +208,19 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
               </div>
             </button>
           </Link>
+
+          <button
+            className="w-full flex rounded-xl items-center justify-between p-4 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 transition-all duration-200"
+            onClick={handleButtonVideo}
+          >
+            <div className="flex items-center space-x-3">
+              <Video size={20} />
+              <span className="font-medium">Ver comparación de Dijkstra</span>
+            </div>
+            <div className="ml-auto flex items-center space-x-2">
+              <ChevronRight />
+            </div>
+          </button>
         </div>
       </div>
 
@@ -188,6 +230,52 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
           Selecciona una ruta para ver información detallada
         </p>
       </div>
+
+      {isVideoOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={handleBackdropClick}
+          onKeyDown={handleKeyDown}
+          tabIndex={-1}
+        >
+          <div className="relative bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Header del modal */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {videoTitle}
+              </h3>
+              <button
+                onClick={closeVideo}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                type="button"
+                aria-label="Cerrar video"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Contenedor del video */}
+            <div
+              className="relative w-full"
+              style={{ paddingBottom: "56.25%" }}
+            >
+              <iframe
+                className="absolute top-0 left-0 w-full h-full"
+                src={videoUrl}
+                title={videoTitle}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+
+            {/* Footer opcional */}
+            <div className="p-4 bg-gray-50 border-t border-gray-200">
+              <p className="text-sm text-gray-600">{videoDescription}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };
