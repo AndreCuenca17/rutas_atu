@@ -1,8 +1,8 @@
 // components/Map.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
+import { useEffect, useRef, useState } from "react";
 import { MapProps } from "@/types/mapProps";
 
 const Map = ({
@@ -11,6 +11,7 @@ const Map = ({
   onUserLocationChange,
   route,
   routeColor,
+  onSearchLocationChange,
 }: MapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
@@ -18,6 +19,13 @@ const Map = ({
   const markerObjectsRef = useRef<google.maps.Marker[]>([]);
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  // 1. Agregar input de búsqueda y lógica de Autocomplete
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [searchLocation, setSearchLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
 
   // Inicializar el mapa solo una vez
   useEffect(() => {
@@ -37,6 +45,37 @@ const Map = ({
       setMapInstance(mapObj);
     });
   }, [mapInstance]);
+
+  // Inicializar Autocomplete cuando el mapa esté listo
+  useEffect(() => {
+    if (
+      !mapInstance ||
+      !window.google ||
+      autocompleteRef.current ||
+      !searchInputRef.current
+    )
+      return;
+    const autocomplete = new window.google.maps.places.Autocomplete(
+      searchInputRef.current,
+      {
+        fields: ["geometry", "name", "formatted_address"],
+        types: ["geocode", "establishment"],
+        componentRestrictions: { country: "pe" },
+      }
+    );
+    // Cuando el usuario selecciona un lugar en el buscador
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (place.geometry && place.geometry.location) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        if (onSearchLocationChange) {
+          onSearchLocationChange({ lat, lng });
+        }
+      }
+    });
+    autocompleteRef.current = autocomplete;
+  }, [mapInstance, onSearchLocationChange]);
 
   // Actualizar centro del mapa si cambia
   useEffect(() => {
@@ -258,8 +297,50 @@ const Map = ({
     }
   }, [center, markers, mapInstance]);
 
+  // Marcar el destino final con una estrella y hacerlo draggable
+  useEffect(() => {
+    if (!mapInstance || !route || route.length === 0) return;
+    // Eliminar marcador anterior si existe
+    if ((window as any).finalDestMarker) {
+      (window as any).finalDestMarker.setMap(null);
+    }
+    const last = route[route.length - 1];
+    const marker = new google.maps.Marker({
+      position: last,
+      map: mapInstance,
+      title: "Destino",
+      draggable: true,
+      icon: {
+        url: "/estrella.png",
+        scaledSize: new google.maps.Size(40, 40),
+      },
+      zIndex: 9999,
+    });
+    marker.addListener("dragend", () => {
+      const newPos = marker.getPosition();
+      if (newPos && onSearchLocationChange) {
+        onSearchLocationChange({ lat: newPos.lat(), lng: newPos.lng() });
+      }
+    });
+    (window as any).finalDestMarker = marker;
+    return () => {
+      marker.setMap(null);
+      (window as any).finalDestMarker = null;
+    };
+  }, [mapInstance, route, onSearchLocationChange]);
+
   return (
     <div className="w-full h-full">
+      {/* Buscador de destino */}
+      <div className="absolute z-20 left-1/2 top-4 -translate-x-1/2 w-full max-w-md flex justify-center">
+        <input
+          ref={searchInputRef}
+          type="text"
+          placeholder="¿A dónde quieres ir?"
+          className="w-full rounded-lg border px-4 py-2 shadow focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
+          style={{ maxWidth: 400, color: "#111", background: "#fff" }}
+        />
+      </div>
       <div ref={mapRef} className="w-full h-full" />
     </div>
   );

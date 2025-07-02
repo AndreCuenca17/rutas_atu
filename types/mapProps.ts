@@ -22,4 +22,10 @@ export interface MapProps {
    * Color de la ruta a graficar (hex o nombre CSS)
    */
   routeColor?: string;
+  /**
+   * Callback que se invoca cuando el usuario selecciona un destino en el buscador.
+   */
+  onSearchLocationChange?: (
+    location: { lat: number; lng: number } | null
+  ) => void;
 }
