@@ -72,7 +72,6 @@ export default function MapClientWrapper({ markers }: Props) {
         const { convertGeojsonToGraph } = await import("@/lib/readGeojson");
         const { findClosestNode } = await import("@/lib/closestNode");
         const { dijkstra } = await import("@/lib/dijkstra");
-        const {dijkstraNaive} = await import("@/lib/dijkstraNaive");
         const graph = convertGeojsonToGraph(geojson);
         const start = findClosestNode(graph, center.lat, center.lng);
         const end = findClosestNode(graph, closestStop.lat, closestStop.lng);
@@ -101,7 +100,6 @@ export default function MapClientWrapper({ markers }: Props) {
         const { convertGeojsonToGraph } = await import("@/lib/readGeojson");
         const { findClosestNode } = await import("@/lib/closestNode");
         const { dijkstra } = await import("@/lib/dijkstra");
-         const {dijkstraNaive} = await import("@/lib/dijkstraNaive");
         const graph = convertGeojsonToGraph(geojson);
         // 1. Encontrar el paradero de inicio más cercano al usuario
         let minDistUser = Infinity;

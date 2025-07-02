@@ -22,10 +22,6 @@ const Map = ({
   // 1. Agregar input de búsqueda y lógica de Autocomplete
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const [searchLocation, setSearchLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
 
   // Inicializar el mapa solo una vez
   useEffect(() => {
@@ -298,11 +294,15 @@ const Map = ({
   }, [center, markers, mapInstance]);
 
   // Marcar el destino final con una estrella y hacerlo draggable
+  interface WindowWithFinalDestMarker extends Window {
+    finalDestMarker?: google.maps.Marker | null;
+  }
   useEffect(() => {
     if (!mapInstance || !route || route.length === 0) return;
     // Eliminar marcador anterior si existe
-    if ((window as any).finalDestMarker) {
-      (window as any).finalDestMarker.setMap(null);
+    const win = window as WindowWithFinalDestMarker;
+    if (win.finalDestMarker) {
+      win.finalDestMarker.setMap(null);
     }
     const last = route[route.length - 1];
     const marker = new google.maps.Marker({
@@ -322,27 +322,43 @@ const Map = ({
         onSearchLocationChange({ lat: newPos.lat(), lng: newPos.lng() });
       }
     });
-    (window as any).finalDestMarker = marker;
+    win.finalDestMarker = marker;
     return () => {
       marker.setMap(null);
-      (window as any).finalDestMarker = null;
     };
-  }, [mapInstance, route, onSearchLocationChange]);
+  }, [route, mapInstance, onSearchLocationChange]);
 
   return (
-    <div className="w-full h-full">
-      {/* Buscador de destino */}
-      <div className="absolute z-20 left-1/2 top-4 -translate-x-1/2 w-full max-w-md flex justify-center">
-        <input
-          ref={searchInputRef}
-          type="text"
-          placeholder="¿A dónde quieres ir?"
-          className="w-full rounded-lg border px-4 py-2 shadow focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
-          style={{ maxWidth: 400, color: "#111", background: "#fff" }}
-        />
-      </div>
-      <div ref={mapRef} className="w-full h-full" />
-    </div>
+    <>
+      <div
+        ref={mapRef}
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      />
+      {/* 2. Input de búsqueda */}
+      <input
+        ref={searchInputRef}
+        type="text"
+        placeholder="Buscar lugar..."
+        style={{
+          position: "absolute",
+          top: "10px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          padding: "10px",
+          borderRadius: "20px",
+          border: "1px solid #ccc",
+          width: "300px",
+          maxWidth: "80%",
+          fontSize: "16px",
+          zIndex: 1000,
+        }}
+      />
+    </>
   );
 };
 
