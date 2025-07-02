@@ -6,9 +6,7 @@ import {
   ChevronRight,
   Train,
   Bus,
-  BarChart,
   LineChart,
-  Barcode,
 } from "lucide-react";
 import { useRoute } from "@/context/RouteContext";
 import Link from "next/link";
@@ -38,8 +36,6 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
       setIsCorredoresOpen(!isCorredoresOpen);
     }
   };
-
-  const handleGoToAnalysis = () => {};
 
   return (
     <aside className="fixed top-0 right-0 h-full w-full sm:w-90 bg-white text-black shadow-lg flex flex-col z-50 transition-transform duration-300 ease-in-out">

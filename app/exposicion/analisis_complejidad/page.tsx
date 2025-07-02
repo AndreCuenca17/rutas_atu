@@ -1,17 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Code,
-  TrendingUp,
-  Clock,
-  Activity,
-  BarChart3,
-  AlertCircle,
-  Info,
-  Zap,
-  X,
-} from "lucide-react";
+import { Code, Clock, Activity, BarChart3, Info, X } from "lucide-react";
 
 // Definición de tipos
 interface CodeLine {
@@ -997,13 +987,17 @@ const AnalisisComplejidad: React.FC = () => {
                   </div>
                 </div>
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="text-blue-800 font-semibold">Relajación de aristas</div>
+                  <div className="text-blue-800 font-semibold">
+                    Relajación de aristas
+                  </div>
                   <div className="text-blue-700 text-sm">
                     {codeAnalysis.summary.relaxation}
                   </div>
                 </div>
                 <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                  <div className="text-purple-800 font-semibold">Reconstrucción del camino</div>
+                  <div className="text-purple-800 font-semibold">
+                    Reconstrucción del camino
+                  </div>
                   <div className="text-purple-700 text-sm">
                     {codeAnalysis.summary.reconstruction}
                   </div>
