@@ -15,19 +15,17 @@ export async function POST(req: Request) {
       destination.lat,
       destination.lng
     );
-    console.log("🚀 Start node:", start)
-    console.log("🚀 End node:", end);
-    console.log("🚀 Graph nodes:", graph.nodes.size);
-    
+
     let path = [];
     try {
-      console.log("🚀 Calculando ruta más corta...");
       const result = dijkstra(graph, start, end);
-      console.log("🚀 Ruta encontrada:", result.path);
       path = result.path;
     } catch (err) {
-      console.error('[API] Error en Dijkstra:', err);
-      return NextResponse.json({ error: 'No se encontró ruta posible entre los nodos.' }, { status: 404 });
+      console.error("[API] Error en Dijkstra:", err);
+      return NextResponse.json(
+        { error: "No se encontró ruta posible entre los nodos." },
+        { status: 404 }
+      );
     }
 
     // Retornar la ruta como array de coordenadas (lat, lng)
@@ -42,10 +40,9 @@ export async function POST(req: Request) {
     return NextResponse.json({
       route: coords,
       start,
-      end
+      end,
     });
-  } catch (err) {
-    console.error("❌ Error en /api/shortest:", err);
+  } catch {
     return NextResponse.json(
       { error: "Error calculando ruta" },
       { status: 500 }

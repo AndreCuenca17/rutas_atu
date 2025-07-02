@@ -1,5 +1,3 @@
-// lib/browserGeojsonCache.ts
-// Utilidades para guardar y leer geojson pesado en IndexedDB del navegador
 import type { GeoJson } from "./readGeojson";
 
 const DB_NAME = "atu-geojson-cache";
