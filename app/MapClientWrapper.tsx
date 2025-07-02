@@ -202,7 +202,10 @@ export default function MapClientWrapper({ markers }: Props) {
   };
 
   return (
-    <div className="w-full h-full relative">
+    <div
+      className="w-full h-full relative"
+      style={{ height: "100vh", minHeight: "100vh" }}
+    >
       {/* Overlay de carga solo si no hay ubicación */}
       {!hasLocation && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80">

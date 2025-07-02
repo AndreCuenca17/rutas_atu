@@ -339,25 +339,37 @@ const Map = ({
           overflow: "hidden",
         }}
       />
-      {/* 2. Input de búsqueda */}
-      <input
-        ref={searchInputRef}
-        type="text"
-        placeholder="Buscar lugar..."
+      {/* Buscador de destino */}
+      <div
         style={{
-          position: "absolute",
-          top: "10px",
+          position: "fixed",
+          top: 110, // Más separación respecto al header
           left: "50%",
           transform: "translateX(-50%)",
-          padding: "10px",
-          borderRadius: "20px",
-          border: "1px solid #ccc",
-          width: "300px",
-          maxWidth: "80%",
-          fontSize: "16px",
           zIndex: 1000,
+          width: "100%",
+          maxWidth: 420,
+          display: "flex",
+          justifyContent: "center",
+          pointerEvents: "none",
         }}
-      />
+      >
+        <input
+          ref={searchInputRef}
+          type="text"
+          placeholder="¿A dónde quieres ir?"
+          className="rounded-lg border px-4 py-2 shadow focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white font-semibold"
+          style={{
+            width: "100%",
+            maxWidth: 400,
+            color: "#111",
+            background: "#fff",
+            border: "2px solid #222",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.22)",
+            pointerEvents: "auto",
+          }}
+        />
+      </div>
     </>
   );
 };
