@@ -23,10 +23,10 @@ const Drawer = ({ isOpen, onClose }: DrawerProps) => {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const { setCurrentRoute } = useRoute();
 
-  const videoUrl = "https://www.youtube.com/embed/pVfj6mxhdMw";
+  const videoUrl = "https://www.youtube.com/embed/4k2nwVAqfOE?si=egxiVpD9MSbnZQMg";
   const videoTitle = "Comparación de Algoritmo de Dijkstra";
   const videoDescription =
-    "Análisis de complejidad del algoritmo de Dijkstra comparado con otros algoritmos de caminos más cortos.";
+    "Comparación de la implementación del algoritmo de Dijkstra (con y sin colas de prioridad) en el contexto de rutas de transporte público en Lima y Callao.";
 
   if (!isOpen) return null;
 
